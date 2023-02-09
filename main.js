@@ -1,6 +1,6 @@
 const word = document.querySelector("#word");
 const text = document.querySelector("#text");
-const timeEl = document.querySelector("#time");
+let timeEl = document.querySelector("#time");
 const scoreEl = document.querySelector("#score");
 const settingsBtn = document.querySelector("#settings-btn");
 const settingsForm = document.querySelector("#settings-form");
@@ -40,6 +40,12 @@ let currentWord;
 let score = 0;
 let time = 10;
 
+// Assign difficulty. The default is medium
+let difficulty = localStorage.getItem('difficulty') === null ? 'medium' : localStorage.getItem('difficulty');
+
+// Change the text select option, depeding on value of difficulty
+settingsDifficulty.value = localStorage.getItem('difficulty') === null ? 'medium' : localStorage.getItem('difficulty');
+
 // Generate random word from array
 const getRandomWord = () => {
     return words[Math.trunc(Math.random() * words.length) + 1];
@@ -57,12 +63,37 @@ const updateScore = () => {
     scoreEl.innerHTML = score;
 }
 
+// Game over, show the message
+const gameOver = () => {
+    endGameEl.innerHTML = `
+    <h1>Time ran out</h1>
+    <p>Your score is ${score}</p>
+    <button onclick="window.location.reload()">Reload</button>
+    `;
+    endGameEl.style.display = 'flex';
+}
+
+// Callback function for timeInterval
+const updateTime = () => {
+    time --;
+    timeEl.innerHTML = `${time}s`;
+
+    if (time === 0) {
+        clearInterval(timeInterval);
+
+        gameOver();
+    }
+}
+
+// Update time
+const timeInterval = setInterval(updateTime, 1000);
+
 addWordToDOM();
 
 // Event listeners
 
+// Typing event
 text.addEventListener('input', function(e) {
-    console.log(e.target.value);
     const insertedText = e.target.value;
 
     if(insertedText === currentWord) {
@@ -72,5 +103,21 @@ text.addEventListener('input', function(e) {
         // Clear
         e.target.value = '';
 
+        // Add time when guessed the word
+        if(difficulty === 'hard') time += 1;
+        if(difficulty === 'medium') time += 3;
+        if(difficulty === 'easy') time += 5;
     }
+});
+
+// Settings btn click
+settingsBtn.addEventListener('click', function() {
+    settings.classList.toggle('hide');
 })
+
+// Settings difficulty
+settingsDifficulty.addEventListener('change', function(e) {
+    difficulty = e.target.value;
+    localStorage.setItem('difficulty', difficulty);
+})
+
